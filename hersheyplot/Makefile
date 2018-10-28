@@ -7,10 +7,16 @@ OBJ = hersheyplot.o
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+all: hersheyplot test
+
 hersheyplot: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
-.PHONY: clean
-
 clean:
-	rm -f *.o *~ core hersheyplot
+	rm -f *.o *.ps *.pdf *~ core hersheyplot
+
+test:
+	./hersheyplot > test.ps
+	ps2pdf -dEPSCrop test.ps
+
+.PHONY: clean test all
