@@ -16,7 +16,6 @@ clean:
 	rm -f *.o *.ps *.pdf *~ core hersheyplot
 
 test:
-	./hersheyplot > test.ps
-	ps2pdf -dEPSCrop test.ps
+	./hersheyplot -p c > test.ps
 
 .PHONY: clean test all

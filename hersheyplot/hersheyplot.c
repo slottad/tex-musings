@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <plot.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "hersheyplot.h"
 
@@ -9,17 +10,39 @@
 
 */
 
-int main ()
+int main (int argc, char **argv)
 {
-    char *format = "ps";
+    struct plotinfo pi = {"ps", "a", "none", 8.5, 11};
+    // char *format = "ps";
+    // char *pagesize = "a";
+    // char *outfile;
+    int c;
     // float x_size = 8.5;
     // float y_size = 11.0;
-    float x_size = 17;
-    float y_size = 22;
+    // float x_size = 17;
+    // float y_size = 22;
 
-    plPlotter *plotter = create_plotter(format, x_size, y_size);
+    while ((c = getopt(argc, argv, "T:p:o:")) != -1) {
+        switch (c) {
+            case 'T':
+                pi.format = optarg;
+                break;
+            case 'p':
+                pi.pagesize = optarg;
+                break;
+            case 'o':
+                pi.outfile = optarg;
+                break;
+            default:
+                on_error("No such option.");
+        }
+    }
 
-    do_plot(plotter, x_size, y_size);
+    init_plotinfo(&pi);
+    
+    plPlotter *plotter = create_plotter(&pi);
+
+    do_plot(plotter, pi.width, pi.height);
 
     cleanup(plotter);
 
@@ -27,35 +50,61 @@ int main ()
 }
 
 void on_error(char *msg) {
-    fprintf (stderr, msg);
+    fprintf (stderr, "%s\n", msg);
     exit (EXIT_FAILURE);
 }
 
+void init_plotinfo(struct plotinfo *p) {
+    switch (p->pagesize[0]) {
+        case 'a':
+            p->width = 8.5;
+            p->height = 11;
+            break;
+        case 'b':
+            p->width = 11;
+            p->height = 17;
+            break;
+        case 'c':
+            p->width = 17;
+            p->height = 22;
+            break;
+        case 'd':
+            p->width = 22;
+            p->height = 34;
+            break;
+        case 'e':
+            p->width = 34;
+            p->height = 44;
+            break;
+        default:
+            on_error("No such pagesize");
+    }
+}
 
-plPlotter* create_plotter(char *format, float width, float height) {
+plPlotter* create_plotter(struct plotinfo *p) {
     plPlotter *plotter;
     plPlotterParams *plotter_params;
-    char desc[50];
+    char desc[100];
 
 
     /* set a Plotter parameter */
     plotter_params = pl_newplparams ();
 
-    if (strncmp(format, "ps", 2) == 0) {
-        sprintf(desc, "b,xsize=%fin,ysize=%fin", width, height);
+    if (strncmp(p->format, "ps", 2) == 0) {
+        sprintf(desc, "%s,xsize=%0.0fin,ysize=%0.0fin,xorigin=0,yorigin=0", p->pagesize, p->width, p->height);
         fprintf(stderr, "%s\n", desc);
         pl_setplparam (plotter_params, "PAGESIZE", desc);
-    } else if (strncmp(format, "X", 2) == 0) {
+    } else if (strncmp(p->format, "X", 2) == 0) {
        pl_setplparam (plotter_params, "BITMAPSIZE", "850x1100");
     } else {
-        on_error("Unknown format\n");
+        on_error("Unknown format.");
     }
 
     /* create a Postscript Plotter that writes to standard output */
     /*if ((plotter = pl_newpl_r ("X", stdin, stdout, stderr, */
-    if ((plotter = pl_newpl_r (format, stdin, stdout, stderr,
+    if ((plotter = pl_newpl_r (p->format, stdin, stdout, stderr,
                                plotter_params)) == NULL) {
-        on_error("Couldn't create Plotter\n");
+        on_error("Couldn't create Plotter.");
     }
 
     return plotter;
@@ -74,7 +123,7 @@ void do_plot(plPlotter *plotter, float x_max, float y_max) {
     while (c < 4399) {
 
         if (pl_openpl_r (plotter) < 0) {
-            on_error("Couldn't open Plotter\n");
+            on_error("Couldn't open Plotter.");
         }
 
         pl_fspace_r (plotter, 0.0, 0.0, x_max, y_max);
@@ -110,7 +159,7 @@ void do_plot(plPlotter *plotter, float x_max, float y_max) {
 
 
         if (pl_closepl_r (plotter) < 0) {
-            on_error("Couldn't close Plotter\n");
+            on_error("Couldn't close Plotter.");
         }
     }
 }
@@ -118,6 +167,6 @@ void do_plot(plPlotter *plotter, float x_max, float y_max) {
 
 void cleanup(plPlotter *plotter) {
     if (pl_deletepl_r (plotter) < 0) {
-        on_error("Couldn't delete Plotter\n");
+        on_error("Couldn't delete Plotter.");
     }
 }
