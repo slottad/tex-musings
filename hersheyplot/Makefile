@@ -13,9 +13,9 @@ hersheyplot: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 clean:
-	rm -f *.o *.ps *.pdf *~ core hersheyplot
+	rm -f *.o test.* *~ core hersheyplot
 
 test:
-	./hersheyplot -p c > test.ps
+	./hersheyplot -p a > test.ps
 
 .PHONY: clean test all
