@@ -1,13 +1,14 @@
 /* hersheyplot.h */
+#include <string>
 
-void on_error(char *msg);
-void on_help();
+void on_error(std::string msg);
+void on_help(std::string progname);
 
 struct plotinfo
 {
-	char *format;
-	char *pagesize;
-	char *outfile;
+	std::string format;
+	std::string pagesize;
+	std::string outfile;
     bool landscape;
 	double width;
 	double height;

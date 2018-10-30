@@ -1,10 +1,10 @@
-CC=gcc
+CC=g++
 CFLAGS=-I.
 LIBS = -lplot -lXaw -lXmu -lXt -lSM -lICE -lXext -lX11 -lpng -lz -lm
-DEPS = hersheyplot.h
+DEPS = hersheyplot.hpp
 OBJ = hersheyplot.o
 
-%.o: %.c $(DEPS)
+%.o: %.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 all: hersheyplot test

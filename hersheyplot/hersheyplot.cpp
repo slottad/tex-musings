@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <plot.h>
-#include <string.h>
 #include <unistd.h>
 
-#include "hersheyplot.h"
+#include "hersheyplot.hpp"
 
+using namespace std;
 /*
 
 */
@@ -16,7 +16,7 @@ double y_max;
 int main (int argc, char **argv)
 {
     struct plotinfo pi = {"ps", "a", "none", false, 8.5, 11};
-    char *action = "limits";
+    string action = "limits";
 
     int c;
     while ((c = getopt(argc, argv, "a:f:p:o:lh")) != -1) {
@@ -36,11 +36,11 @@ int main (int argc, char **argv)
                 pi.landscape = true;
                 break;
             case 'h':
-                on_help();
+                on_help(argv[0]);
                 exit (EXIT_SUCCESS);
                 break;
             default:
-                on_help();
+                on_help(argv[0]);
                 on_error("No such option.");
         }
     }
@@ -48,9 +48,9 @@ int main (int argc, char **argv)
     init_plotinfo(&pi);
     plPlotter *plotter = create_plotter(&pi);
 
-    if (strncmp(action, "limits", 6) == 0) {
+    if (action == "limits") {
         do_limits(plotter, pi);
-    } else if (strncmp(action, "hershey", 6) == 0) {
+    } else if (action == "hershey") {
         do_testplot(plotter, pi.width, pi.height);
     } else {
         on_error("function not implemented");
@@ -60,13 +60,13 @@ int main (int argc, char **argv)
     return 0;
 }
 
-void on_error(char *msg) {
-    fprintf (stderr, "%s\n", msg);
+void on_error(string msg) {
+    fprintf (stderr, "%s\n", msg.c_str());
     exit (EXIT_FAILURE);
 }
 
-void on_help(char *progname) {
-    printf ("Usage: %s [options]\n", progname);
+void on_help(string progname) {
+    printf ("Usage: %s [options]\n", progname.c_str());
     printf ("\t-a <action>  \t Select action: [ limits, hershey, wordsearch ], default is 'limits'.\n");
     printf ("\t-f <format>  \t Choose format: [ X, png, gif, ps, svg, hpgl ], default is 'ps'.\n");
     printf ("\t-p <pagesize>\t Set page size: [ a, b, c, d, e ], default is 'a'.\n");
@@ -133,33 +133,28 @@ plPlotter* create_plotter(struct plotinfo *p) {
     //     pl_setplparam (plotter_params, "ROTATION", "90");
     // }
 
-    if ((strncmp(p->format, "ps", 2) == 0)  ||
-        (strncmp(p->format, "svg", 3) == 0))
+    if ((p->format == "ps") || (p->format == "svg"))
     {
-        sprintf(desc, "%s,xsize=%0.1fin,ysize=%0.1fin,xorigin=0,yorigin=0", p->pagesize, p->width, p->height);
+        sprintf(desc, "%s,xsize=%0.1fin,ysize=%0.1fin,xorigin=0,yorigin=0", p->pagesize.c_str(), p->width, p->height);
         fprintf(stderr, "%s\n", desc);
         pl_setplparam (plotter_params, "PAGESIZE", desc);
     }
-    else if (strncmp(p->format, "hpgl", 4) == 0)
+    else if (p->format, "hpgl")
     {
         if (p->landscape) {
             sprintf(desc, "%s,xsize=%0.1fin,ysize=%0.1fin,xoffset=-%0.2fin,yoffset=-%0.2fin",
-                p->pagesize, p->width, p->height, p->width/2.0, p->height/2.0);
+                p->pagesize.c_str(), p->width, p->height, p->width/2.0, p->height/2.0);
         } else {
-            //sprintf(desc, "%s,xsize=%0.1fin,ysize=%0.1fin,yoffset=-%0.1fin", p->pagesize, p->width, p->height, p->height);
             sprintf(desc, "%s,xsize=%0.1fin,ysize=%0.1fin,xoffset=-%0.2fin,yoffset=-%0.2fin",
-                p->pagesize, p->width, p->height, p->width/2.0, p->height/2.0);
-            pl_setplparam (plotter_params, "HPGL_ROTATE", "90");
-            //pl_setplparam (plotter_params, "ROTATE", "90");
+                p->pagesize.c_str(), p->width, p->height, p->width/2.0, p->height/2.0);
+            pl_setplparam (plotter_params, "HPGL_ROTATE", const_cast<char*>("90"));
         }
         fprintf(stderr, "%s\n", desc);
         pl_setplparam (plotter_params, "PAGESIZE", desc);
-        pl_setplparam (plotter_params, "HPGL_VERSION", "1");
+        pl_setplparam (plotter_params, "HPGL_VERSION", const_cast<char*>("1"));
 
     }
-    else if ((strncmp(p->format, "X", 1) == 0)   ||
-             (strncmp(p->format, "png", 3) == 0) ||
-             (strncmp(p->format, "gif", 3) == 0))
+    else if ((p->format, "X") || (p->format == "png") || (p->format == "gif"))
     {
         sprintf(desc, "%dx%d", (int)(p->width*100), (int)(p->height*100));
         pl_setplparam (plotter_params, "BITMAPSIZE", desc);
@@ -171,7 +166,7 @@ plPlotter* create_plotter(struct plotinfo *p) {
 
     /* create a Postscript Plotter that writes to standard output */
     /*if ((plotter = pl_newpl_r ("X", stdin, stdout, stderr, */
-    if ((plotter = pl_newpl_r (p->format, stdin, stdout, stderr,
+    if ((plotter = pl_newpl_r (p->format.c_str(), stdin, stdout, stderr,
                                plotter_params)) == NULL) {
         on_error("Couldn't create Plotter.");
     }
