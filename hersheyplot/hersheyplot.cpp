@@ -228,7 +228,7 @@ void plot_limits(PlotPage &plotter) {
 
     plotter.fontname("HersheySerif");
     plotter.fontsize(0.25);
- 
+
     plotter.fbox(0.5, 0.5, plotter.width-0.5, plotter.height-0.5);
 
     plotter.move(1, 1);
@@ -257,15 +257,15 @@ void plot_font(PlotPage &plotter) {
     char s[9];
     char num[5];
     double xorigin = 0.5;
-    double yorigin = 0.25;
-    double space = 0.5;
+    double yorigin = 0.5;
+    double space = 1.25;
     int ncols = (plotter.width - xorigin*2) / space;
     int nrows = (plotter.height - yorigin*2) / space;
 
     while (c < 4399) {
 
         plotter.open();
-        plotter.fontname("HersheySerif");
+        plotter.fontname("HersheySans");
 
         for (int y=0; y<nrows; y++) {
             for (int x=0; x<ncols; x++) {
@@ -284,10 +284,10 @@ void plot_font(PlotPage &plotter) {
                 }
 
                 if (c < 4399) {
-                    plotter.fontsize(0.35);
+                    plotter.fontsize(0.75);
                     plotter.label('c', 'c', s);
-                    plotter.moverel(0, 0.2);
-                    plotter.fontsize(0.07);
+                    plotter.moverel(0, 0.6);
+                    plotter.fontsize(0.25);
                     sprintf(num, "%04d", c);
                     plotter.label('c', 'c', num);
                 }

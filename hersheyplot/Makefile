@@ -16,6 +16,7 @@ clean:
 	rm -f *.o test.* *~ core hersheyplot
 
 test:
-	./hersheyplot -p a > test.ps
+	#./hersheyplot -p a > test.ps
+	./hersheyplot -f X -p d -a hershey -l
 
 .PHONY: clean test all
