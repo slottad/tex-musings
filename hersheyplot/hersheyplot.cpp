@@ -15,14 +15,15 @@ double y_max;
 
 int main (int argc, char **argv)
 {
-    struct plotinfo pi = {"ps", "a", "none", false, 8.5, 11};
-    string action = "limits";
+    struct plotinfo pi = {"ps", "a", "none", false};
+    string action("limits");
 
     int c;
     while ((c = getopt(argc, argv, "a:f:p:o:lh")) != -1) {
         switch (c) {
             case 'a':
                 action = optarg;
+                break;
             case 'f':
                 pi.format = optarg;
                 break;
@@ -44,22 +45,18 @@ int main (int argc, char **argv)
                 on_error("No such option.");
         }
     }
+    //fprintf(stderr, "Action: %s\nFormat: %s\n", action.c_str(), pi.format.c_str());
 
     PlotPage plotter(pi);
 
-    //p.fbox(0.5, 0.5, p.m_width-0.5, p.m_height-0.5);
-    //init_plotinfo(&pi);
-    // plPlotter *plotter = create_plotter(&pi);
-
     if (action == "limits") {
-        do_limits(plotter);
-    // } else if (action == "hershey") {
-    //     do_testplot(plotter, pi.width, pi.height);
+        plot_limits(plotter);
+    } else if (action == "hershey") {
+        plot_font(plotter);
     } else {
         on_error("function not implemented");
     }
 
-    // cleanup(plotter);
     return 0;
 }
 
@@ -172,13 +169,20 @@ void PlotPage::init_plotter(plotinfo const& p) {
         on_error("Unknown format.");
     }
 
-    /* create a Postscript Plotter that writes to standard output */
-    /*if ((plotter = pl_newpl_r ("X", stdin, stdout, stderr, */
+}
+
+void PlotPage::open() {
     if ( m_plotter->openpl() < 0) {
-        on_error("Couldn't create Plotter.");
+        on_error("Couldn't open Plotter page.");
     }
-    m_plotter->fspace(0.0, 0.0, width, height);
     m_plotter->erase();
+    m_plotter->fspace(0.0, 0.0, width, height);
+}
+
+void PlotPage::close() {
+    if ( m_plotter->closepl() < 0) {
+        on_error("Couldn't close Plotter page.");
+    }
 }
 
 double PlotPage::flip(double in) {
@@ -196,8 +200,11 @@ void PlotPage::label(int hjust, int vjust, string text) {
     m_plotter->alabel(hjust, vjust, text.c_str());
 }
 
-void PlotPage::set_font(string name, double size) {
+void PlotPage::fontname(string name) {
     m_plotter->fontname(name.c_str());
+}
+
+void PlotPage::fontsize(double size) {
     m_plotter->ffontsize(size);
 }
 
@@ -205,11 +212,23 @@ void PlotPage::move(double x, double y) {
     m_plotter->fmove(x, flip(y));
 }
 
-void do_limits(PlotPage &plotter) {
+void PlotPage::moverel(double x, double y) {
+    m_plotter->fmoverel(x, -y);
+}
+
+double PlotPage::labelwidth(string label) {
+    return m_plotter->flabelwidth(label.c_str());
+}
+
+void plot_limits(PlotPage &plotter) {
 
     char coords[20];
 
-    plotter.set_font("HersheySerif", 0.25);
+    plotter.open();
+
+    plotter.fontname("HersheySerif");
+    plotter.fontsize(0.25);
+ 
     plotter.fbox(0.5, 0.5, plotter.width-0.5, plotter.height-0.5);
 
     plotter.move(1, 1);
@@ -228,66 +247,54 @@ void do_limits(PlotPage &plotter) {
     plotter.move(plotter.width-1, plotter.height-1);
     sprintf(coords, "(%0.1f, %0.1f)", plotter.width, plotter.height );
     plotter.label('r', 'c', coords);
+
+    plotter.close();
 }
 
 
-// void do_testplot(plPlotter *plotter, double x_max, double y_max) {
-//     int c = 1;
-//     char s[9];
-//     char num[5];
-//     double xorigin = 0.5;
-//     double yorigin = 0.25;
-//     double space = 0.5;
-//     int ncols = (x_max - xorigin*2) / space;
-//     int nrows = (y_max - yorigin*2) / space;
+void plot_font(PlotPage &plotter) {
+    int c = 1;
+    char s[9];
+    char num[5];
+    double xorigin = 0.5;
+    double yorigin = 0.25;
+    double space = 0.5;
+    int ncols = (plotter.width - xorigin*2) / space;
+    int nrows = (plotter.height - yorigin*2) / space;
 
-//     while (c < 4399) {
+    while (c < 4399) {
 
-//         if (pl_openpl_r (plotter) < 0) {
-//             on_error("Couldn't open Plotter.");
-//         }
+        plotter.open();
+        plotter.fontname("HersheySerif");
 
-//         pl_fspace_r (plotter, 0.0, 0.0, x_max, y_max);
-//         pl_erase_r (plotter);
-//         pl_fontname_r (plotter, "HersheySerif");
+        for (int y=0; y<nrows; y++) {
+            for (int x=0; x<ncols; x++) {
+                double xloc = xorigin+x*space;
+                double yloc = yorigin+y*space;
+                //fprintf(stderr, "%f, %f\n", xloc, yloc);
+                plotter.move(xloc, yloc);
 
-//         for (int y=0; y<nrows; y++) {
-//             for (int x=0; x<ncols; x++) {
-//                 double xloc = xorigin+x*space;
-//                 double yloc = y_max - (yorigin+y*space);
-//                 //printf("%f, %f\n", xloc, yloc);
-//                 pl_fmove_r (plotter, xloc, yloc);
+                sprintf(s, "\\#H%04d", c);
+                //fprintf(stderr, "%s\n", s);
 
-//                 sprintf(s, "\\#H%04d", c);
+                while (plotter.labelwidth(s) < 0.000001) {
+                    c++;
+                    sprintf(s, "\\#H%04d", c);
+                    // fprintf(stderr, "%s\n", s);
+                }
 
-//                 while (pl_flabelwidth_r(plotter, s) < 0.000001) {
-//                     c++;
-//                     sprintf(s, "\\#H%04d", c);
-//                 }
+                if (c < 4399) {
+                    plotter.fontsize(0.35);
+                    plotter.label('c', 'c', s);
+                    plotter.moverel(0, 0.2);
+                    plotter.fontsize(0.07);
+                    sprintf(num, "%04d", c);
+                    plotter.label('c', 'c', num);
+                }
 
-//                 if (c < 4399) {
-//                     pl_ffontsize_r (plotter, 0.35);
-//                     pl_alabel_r(plotter, 'c', 'c', s);
-//                     pl_fmoverel_r(plotter, 0, -0.2);
-//                     pl_ffontsize_r (plotter, 0.07);
-//                     sprintf(num, "%04d", c);
-//                     pl_alabel_r(plotter, 'c', 'c', num);
-//                 }
-
-//                 c++;
-//             }
-//         }
-
-
-//         if (pl_closepl_r (plotter) < 0) {
-//             on_error("Couldn't close Plotter.");
-//         }
-//     }
-// }
-
-
-// void cleanup(plPlotter *plotter) {
-//     if (pl_deletepl_r (plotter) < 0) {
-//         on_error("Couldn't delete Plotter.");
-//     }
-// }
+                c++;
+            }
+        }
+        plotter.close();
+    }
+}

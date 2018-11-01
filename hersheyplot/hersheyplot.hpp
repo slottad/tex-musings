@@ -11,8 +11,8 @@ struct plotinfo
 	std::string pagesize;
 	std::string outfile;
     bool landscape;
-	double width;
-	double height;
+	// double width;
+	// double height;
 };
 
 class PlotPage
@@ -33,6 +33,9 @@ public:
 	void init_dimensions(plotinfo const& pi);
 	void init_plotter(plotinfo const& pi);
 
+	void open();
+	void close();
+
 	// Drawing functions
 
 	void fbox(double x0, double y0, double x1, double y1);
@@ -40,8 +43,13 @@ public:
 
 	// Settings
 
-	void set_font(string name, double size);
+	void fontname(string name);
+	void fontsize(double size);
 	void move(double x, double y);
+	void moverel(double x, double y);
+
+	// Query
+	double labelwidth(string label);
 
 private:
 
@@ -49,12 +57,6 @@ private:
 };
 
 
-// void init_plotinfo(struct plotinfo *p);
-// plPlotter* create_plotter(struct plotinfo *p);
+void plot_limits(PlotPage &plotter);
+void plot_font(PlotPage &plotter);
 
-// double y(double oldy);
-
-void do_limits(PlotPage &plotter);
-// void do_testplot(plPlotter *plotter, double x_max, double y_max);
-
-// void cleanup(plPlotter *plotter);
