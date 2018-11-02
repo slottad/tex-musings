@@ -1,6 +1,6 @@
 CC=g++
 CFLAGS=-I.
-LIBS = -lplotter -lXaw -lXmu -lXt -lSM -lICE -lXext -lX11 -lpng -lz -lm
+LIBS = -lboost_program_options -lplotter -lXaw -lXmu -lXt -lSM -lICE -lXext -lX11 -lpng -lz -lm
 DEPS = hersheyplot.hpp
 OBJ = hersheyplot.o
 

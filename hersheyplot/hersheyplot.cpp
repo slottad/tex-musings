@@ -4,6 +4,9 @@
 #include <plot.h>
 #include <unistd.h>
 
+#include <boost/program_options.hpp>
+#include <iostream>
+
 #include "hersheyplot.hpp"
 
 using namespace std;
@@ -12,11 +15,36 @@ using namespace std;
 */
 double y_max;
 
+namespace po = boost::program_options;
 
-int main (int argc, char **argv)
+int main (int argc, char *argv[])
 {
     struct plotinfo pi = {"ps", "a", "none", false};
     string action("limits");
+
+    try {
+        po::options_description desc("Options");
+        desc.add_options()
+            ("help,h", "This Help message")
+            ("action,a", po::value<string>(&action), "What should this program do?")
+            ("format,f", po::value<string>(&pi.format), "Output format type.")
+            ("pagesize,p", po::value<string>(&pi.pagesize), "Nominal pagesize.")
+            ("landscape,l", "Turn on landscape mode.")
+        ;
+
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
+
+        if (vm.count("help")) {
+            cout << desc << "\n";
+            return 1;
+        }
+
+    } catch (const po::error &ex) {
+        on_error(ex.what());
+    }
+
 
     int c;
     while ((c = getopt(argc, argv, "a:f:p:o:lh")) != -1) {
