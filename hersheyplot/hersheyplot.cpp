@@ -1,11 +1,11 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
-#include <plot.h>
-#include <unistd.h>
+//#include <plot.h>
 
 #include <boost/program_options.hpp>
+
 #include <iostream>
+#include <cstdio>
 
 #include "hersheyplot.hpp"
 
@@ -21,6 +21,7 @@ int main (int argc, char *argv[])
 {
     struct plotinfo pi = {"ps", "a", "none", false};
     string action("limits");
+    string outfilename;
 
     try {
         po::options_description desc("Options");
@@ -30,6 +31,7 @@ int main (int argc, char *argv[])
             ("format,f", po::value<string>(&pi.format), "Output format type.")
             ("pagesize,p", po::value<string>(&pi.pagesize), "Nominal pagesize.")
             ("landscape,l", "Turn on landscape mode.")
+            ("outfile,o", po::value<string>(&outfilename), "Name (or basename if hpgl) of output file.")
         ;
 
         po::variables_map vm;
@@ -38,42 +40,13 @@ int main (int argc, char *argv[])
 
         if (vm.count("help")) {
             cout << desc << "\n";
-            return 1;
+            return EXIT_SUCCESS;
         }
 
+        pi.landscape = vm.count("landscape");
     } catch (const po::error &ex) {
         on_error(ex.what());
     }
-
-
-    int c;
-    while ((c = getopt(argc, argv, "a:f:p:o:lh")) != -1) {
-        switch (c) {
-            case 'a':
-                action = optarg;
-                break;
-            case 'f':
-                pi.format = optarg;
-                break;
-            case 'p':
-                pi.pagesize = optarg;
-                break;
-            case 'o':
-                pi.outfile = optarg;
-                break;
-            case 'l':
-                pi.landscape = true;
-                break;
-            case 'h':
-                on_help(argv[0]);
-                exit (EXIT_SUCCESS);
-                break;
-            default:
-                on_help(argv[0]);
-                on_error("No such option.");
-        }
-    }
-    //fprintf(stderr, "Action: %s\nFormat: %s\n", action.c_str(), pi.format.c_str());
 
     PlotPage plotter(pi);
 
