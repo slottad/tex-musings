@@ -17,6 +17,6 @@ clean:
 
 test:
 	#./hersheyplot -p a > test.ps
-	./hersheyplot -f X -p d -a hershey -l
+	./hersheyplot -f X -p c -a hershey -l
 
 .PHONY: clean test all
