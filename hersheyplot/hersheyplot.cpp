@@ -21,7 +21,6 @@ int main (int argc, char *argv[])
 {
     struct plotinfo pi = {"ps", "a", "none", false};
     string action("limits");
-    string outfilename;
 
     try {
         po::options_description desc("Options");
@@ -31,7 +30,7 @@ int main (int argc, char *argv[])
             ("format,f", po::value<string>(&pi.format), "Output format type.")
             ("pagesize,p", po::value<string>(&pi.pagesize), "Nominal pagesize.")
             ("landscape,l", "Turn on landscape mode.")
-            ("outfile,o", po::value<string>(&outfilename), "Name (or basename if hpgl) of output file.")
+            ("outfile,o", po::value<string>(&pi.outfile), "Name (or basename if hpgl) of output file.")
         ;
 
         po::variables_map vm;
@@ -48,12 +47,12 @@ int main (int argc, char *argv[])
         on_error(ex.what());
     }
 
-    PlotPage plotter(pi);
-
     if (action == "limits") {
-        plot_limits(plotter);
+        plot_limits(pi);
     } else if (action == "hershey") {
-        plot_font(plotter);
+        plot_font(pi);
+    } else if (action == "fontdim") {
+        plot_fontdim(pi);
     } else {
         on_error("function not implemented");
     }
@@ -62,18 +61,8 @@ int main (int argc, char *argv[])
 }
 
 void on_error(string msg) {
-    fprintf (stderr, "%s\n", msg.c_str());
+    cerr << msg << endl;
     exit (EXIT_FAILURE);
-}
-
-void on_help(string progname) {
-    printf ("Usage: %s [options]\n", progname.c_str());
-    printf ("\t-a <action>  \t Select action: [ limits, hershey, wordsearch ], default is 'limits'.\n");
-    printf ("\t-f <format>  \t Choose format: [ X, png, gif, ps, svg, hpgl ], default is 'ps'.\n");
-    printf ("\t-p <pagesize>\t Set page size: [ a, b, c, d, e ], default is 'a'.\n");
-    printf ("\t-l           \t Set landscape mode, default is portrait.\n");
-    printf ("\t-o <filname> \t Output to file, default is stdout.\n");
-    printf ("\t-h           \t This help text.\n");
 }
 
 PlotPage::PlotPage(plotinfo const& pi) {
@@ -221,13 +210,14 @@ double PlotPage::labelwidth(string label) {
     return m_plotter->flabelwidth(label.c_str());
 }
 
-void plot_limits(PlotPage &plotter) {
+void plot_limits(plotinfo &pi) {
+    PlotPage plotter(pi);
 
     char coords[20];
 
     plotter.open();
 
-    plotter.fontname("HersheySerif");
+    plotter.fontname("HersheySans");
     plotter.fontsize(0.25);
 
     plotter.fbox(0.5, 0.5, plotter.width-0.5, plotter.height-0.5);
@@ -253,7 +243,9 @@ void plot_limits(PlotPage &plotter) {
 }
 
 
-void plot_font(PlotPage &plotter) {
+void plot_font(plotinfo &pi) {
+    PlotPage plotter(pi);
+
     int c = 1;
     char s[9];
     char num[5];
@@ -298,4 +290,24 @@ void plot_font(PlotPage &plotter) {
         }
         plotter.close();
     }
+}
+
+
+void plot_fontdim(plotinfo &pi) {
+    //PlotPage plotter(pi);
+
+    vector<string> fontlist = { "HersheySerif",
+                                "HersheySerif-Italic",
+                                "HersheySerif-Bold",
+                                "HersheySerif-BoldItalic",
+                                "HersheySans",
+                                "HersheySans-Oblique",
+                                "HersheySans-Bold",
+                                "HersheySans-BoldOblique",
+                                "HersheyScript",
+                                "HersheyScript-Bold" };
+    for (auto f : fontlist) {
+        cout << f << endl;
+    }
+
 }

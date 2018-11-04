@@ -11,8 +11,6 @@ struct plotinfo
 	std::string pagesize;
 	std::string outfile;
     bool landscape;
-	// double width;
-	// double height;
 };
 
 class PlotPage
@@ -57,6 +55,6 @@ private:
 };
 
 
-void plot_limits(PlotPage &plotter);
-void plot_font(PlotPage &plotter);
-
+void plot_limits(plotinfo &pi);
+void plot_font(plotinfo &pi);
+void plot_fontdim(plotinfo &pi);
