@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdbool.h>
-//#include <plot.h>
 
 #include <boost/program_options.hpp>
 
@@ -10,27 +9,23 @@
 #include "hersheyplot.hpp"
 
 using namespace std;
-/*
-
-*/
-double y_max;
-
 namespace po = boost::program_options;
 
 int main (int argc, char *argv[])
 {
-    struct plotinfo pi = {"ps", "a", "none", false};
+    struct plotinfo pi = {"ps", "a", "test", 0.5, false};
     string action("limits");
 
     try {
         po::options_description desc("Options");
         desc.add_options()
-            ("help,h", "This Help message")
-            ("action,a", po::value<string>(&action), "What should this program do?")
-            ("format,f", po::value<string>(&pi.format), "Output format type.")
-            ("pagesize,p", po::value<string>(&pi.pagesize), "Nominal pagesize.")
+            ("action,a", po::value<string>(&action), "What should this program do? (hershey, fontdim, tfm, limits)")
+            ("format,f", po::value<string>(&pi.format), "Output format type. (gif, hpgl, png, ps, or X)")
+            ("pagesize,p", po::value<string>(&pi.pagesize), "Nominal pagesize. (a, b, c, d, or e)")
+            ("fontsize,s", po::value<double>(&pi.fontsize), "Default fontsize (if applicable).")
             ("landscape,l", "Turn on landscape mode.")
             ("outfile,o", po::value<string>(&pi.outfile), "Name (or basename if hpgl) of output file.")
+            ("help,h", "This Help message.")
         ;
 
         po::variables_map vm;
@@ -49,8 +44,10 @@ int main (int argc, char *argv[])
 
     if (action == "limits") {
         plot_limits(pi);
+    } else if (action == "tfm") {
+        plot_tfm(pi);
     } else if (action == "hershey") {
-        plot_font(pi);
+        plot_hershey(pi);
     } else if (action == "fontdim") {
         plot_fontdim(pi);
     } else {
@@ -179,11 +176,26 @@ double PlotPage::flip(double in) {
     return height - in;
 }
 
-void PlotPage::fbox(double x0, double y0, double x1, double y1) {
+void PlotPage::box(double x0, double y0, double x1, double y1) {
     m_plotter->fline(x0, flip(y0), x1, flip(y0));
     m_plotter->fline(x1, flip(y0), x1, flip(y1));
     m_plotter->fline(x1, flip(y1), x0, flip(y1));
     m_plotter->fline(x0, flip(y1), x0, flip(y0));
+}
+
+void PlotPage::boxrel(double x0, double y0, double x1, double y1) {
+    this->linerel(x0, y0, x1, 0);
+    this->linerel(0, 0, 0, y1);
+    this->linerel(0, 0, -x1, 0);
+    this->linerel(0, 0, 0, -y1);
+}
+
+void PlotPage::line(double x0, double y0, double x1, double y1) {
+    m_plotter->fline(x0, flip(y0), x1, flip(y1));
+}
+
+void PlotPage::linerel(double x0, double y0, double x1, double y1) {
+    m_plotter->flinerel(x0, -y0, x1, -y1);
 }
 
 void PlotPage::label(int hjust, int vjust, string text) {
@@ -220,7 +232,7 @@ void plot_limits(plotinfo &pi) {
     plotter.fontname("HersheySans");
     plotter.fontsize(0.25);
 
-    plotter.fbox(0.5, 0.5, plotter.width-0.5, plotter.height-0.5);
+    plotter.box(0.5, 0.5, plotter.width-0.5, plotter.height-0.5);
 
     plotter.move(1, 1);
     sprintf(coords, "(%0.1f, %0.1f)", 0.0, 0.0 );
@@ -243,7 +255,7 @@ void plot_limits(plotinfo &pi) {
 }
 
 
-void plot_font(plotinfo &pi) {
+void plot_hershey(plotinfo &pi) {
     PlotPage plotter(pi);
 
     int c = 1;
@@ -294,8 +306,10 @@ void plot_font(plotinfo &pi) {
 
 
 void plot_fontdim(plotinfo &pi) {
-    //PlotPage plotter(pi);
-
+    PlotPage plotter(pi);
+    plotter.open();
+    plotter.fontsize(pi.fontsize);
+    plotter.box(0.1, 0.1, plotter.width-0.1, plotter.height-0.1);
     vector<string> fontlist = { "HersheySerif",
                                 "HersheySerif-Italic",
                                 "HersheySerif-Bold",
@@ -306,8 +320,54 @@ void plot_fontdim(plotinfo &pi) {
                                 "HersheySans-BoldOblique",
                                 "HersheyScript",
                                 "HersheyScript-Bold" };
+    double curx = 0.1;
+    double cury = 0.5;
+    double yorigin = 1;
+    double xskip = (plotter.width - curx*2) / (fontlist.size()*2+1);
+    double yskip = 0.1 + pi.fontsize;
+    
     for (auto f : fontlist) {
-        cout << f << endl;
+        plotter.fontname(f);
+        curx += xskip;
+        cury = yorigin;
+        for (int c='A'; c<='Z'; c++) {
+            plotter.move(curx, cury);
+            plotter.label('l', 'x', string(1, static_cast<char>(c)));
+            cury += yskip;
+        }
+        curx += xskip;
+        cury = yorigin;
+        for (int c='a'; c<='z'; c++) {
+            plotter.move(curx, cury);
+            plotter.label('l', 'x', string(1, static_cast<char>(c)));
+            cury += yskip;
+        }
     }
+    cury = yorigin;
+    for (int c='a'; c<='z'; c++) {
+        //plotter.line(0.1,cury,plotter.width-0.1,cury);
+        for (double y=0; y<pi.fontsize; y+=0.1) {
+            plotter.line(0.1,cury-y,plotter.width-0.1,cury-y);
+        }
+        cury+=yskip;
+    }
+    plotter.close();
+}
 
+void plot_tfm(plotinfo &pi) {
+    PlotPage p(pi);
+    p.open();
+    p.fontsize(pi.fontsize);
+    p.fontname("HersheySans");
+    double cx = p.width/2.0;
+    double cy = p.height/2.0;
+    p.move(cx, cy);
+    double w = p.labelwidth("A");
+    // cerr << w << "\t" << pi.fontsize << endl;
+    // p.linerel(0,0,w,-pi.fontsize);
+    // p.box(cx,cy,cx+w, cy-pi.fontsize);
+    p.boxrel(0,0    ,w, -pi.fontsize);
+    p.move(cx, cy);
+    p.label('l', 'b', "A");
+    p.close();
 }

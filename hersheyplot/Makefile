@@ -18,6 +18,7 @@ clean:
 test:
 	#./hersheyplot -p a > test.ps
 	#./hersheyplot -f X -p c -a hershey -l
-	./hersheyplot -fX -pd -afontdim -l
+	#./hersheyplot -fX -pc -afontdim -l
+	./hersheyplot -fX -pb -atfm
 
 .PHONY: clean test all

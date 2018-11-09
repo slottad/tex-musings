@@ -10,6 +10,7 @@ struct plotinfo
 	std::string format;
 	std::string pagesize;
 	std::string outfile;
+	double fontsize;
     bool landscape;
 };
 
@@ -36,7 +37,11 @@ public:
 
 	// Drawing functions
 
-	void fbox(double x0, double y0, double x1, double y1);
+	void box(double x0, double y0, double x1, double y1);
+	void boxrel(double x0, double y0, double x1, double y1);
+	void line(double x0, double y0, double x1, double y1);
+	void linerel(double x0, double y0, double x1, double y1);
+
 	void label(int hjust, int vjust, string text);
 
 	// Settings
@@ -56,5 +61,6 @@ private:
 
 
 void plot_limits(plotinfo &pi);
-void plot_font(plotinfo &pi);
+void plot_hershey(plotinfo &pi);
 void plot_fontdim(plotinfo &pi);
+void plot_tfm(plotinfo &pi);
